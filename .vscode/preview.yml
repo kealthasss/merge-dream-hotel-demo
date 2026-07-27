@@ -9,8 +9,8 @@ apps:
     # 启动命令：先切换到项目目录，再安装依赖 → 构建 → 启动静态预览
     # 双保险：cd /workspace 确保即使 root 解析异常，命令也在项目目录执行
     run: cd /workspace && npm install && npm run build && npm run preview -- --port 3000
-    # 应用启动目录：项目实际绝对路径（CloudStudio 默认 cwd 即工作区根 /workspace）
-    root: /workspace
+    # 应用启动目录：相对于 CloudStudio 工作区根的相对路径（工作区根即 /workspace）
+    root: .
     name: merge-dream-hotel-demo
     description: Merge Dream Hotel 横屏可玩 Demo（合并机制 / Gate / 资源系统 / UI）
     # 该 app 是否自动开启预览
