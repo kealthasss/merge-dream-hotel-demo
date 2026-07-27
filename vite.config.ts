@@ -9,5 +9,9 @@ export default defineConfig({
     outDir: '../dist',
     assetsInlineLimit: 0,
     emptyOutDir: true
+  },
+  // CloudStudio 等网关的反向代理域名每次随机前缀，设为 true 允许所有 host 通过校验
+  preview: {
+    allowedHosts: true
   }
 });
