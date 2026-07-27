@@ -1,0 +1,16 @@
+workspace: .vscode/preview.yml
+
+# 打开工作区时是否自动启动所有 apps 的预览
+autoOpen: true
+
+apps:
+  # 应用1：Merge Dream Hotel 横屏 Demo
+  - port: 3000
+    # 启动命令：安装依赖 → TypeScript 检查 + Vite 构建 → 启动静态预览
+    run: npm install && npm run build && npm run preview -- --port 3000
+    # 应用启动目录（工作区根目录）
+    root: /
+    name: merge-dream-hotel-demo
+    description: Merge Dream Hotel 横屏可玩 Demo（合并机制 / Gate / 资源系统 / UI）
+    # 该 app 是否自动开启预览
+    autoOpen: true
