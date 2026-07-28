@@ -61,7 +61,7 @@ function itemVisualHtml(itemId: ItemId): string {
   const emoji = ITEMS[itemId].icon;
   const img = ITEM_IMAGES[itemId];
   if (!img) return `<span class="item-visual no-img"><span class="item-fallback">${emoji}</span></span>`;
-  return `<span class="item-visual"><span class="item-fallback">${emoji}</span><img class="item-img" src="${img}" alt="${ITEMS[itemId].name}" loading="lazy" onerror="this.style.display='none'; this.parentElement?.classList.add('no-img')"></span>`;
+  return `<span class="item-visual"><span class="item-fallback">${emoji}</span><img class="item-img" src="${img}" alt="${ITEMS[itemId].name}" loading="lazy" draggable="false" onerror="this.style.display='none'; this.parentElement?.classList.add('no-img')"></span>`;
 }
 
 // ---------------- 渲染 ----------------
