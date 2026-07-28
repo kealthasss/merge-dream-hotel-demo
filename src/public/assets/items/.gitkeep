@@ -1,0 +1,3 @@
+# 占位文件：本目录用于存放物品/生成器美术图（PNG）。
+# 由 scripts/gen_images.py 在本机联网运行后生成 cleaning_1..5 / linen_1..5 / fb_1..5 / gen_toolbox / gen_linen / gen_pantry 共 18 张 PNG。
+# 图像缺失时 UI 自动回退到 emoji（见 src/ui.ts 的 itemVisualHtml / src/styles.css 的 .item-img onerror）。

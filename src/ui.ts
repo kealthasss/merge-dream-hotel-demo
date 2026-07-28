@@ -4,6 +4,7 @@ import { CONFIG } from './data/config';
 import { ITEMS } from './data/chains';
 import { GENERATORS, GENERATOR_MAP } from './data/generators';
 import { AREAS, AREA_MAP, ORDER_MAP } from './data/areas';
+import { ITEM_IMAGES } from './data/images';
 import {
   computeAreaUnlocked,
   computeGenUnlocked,
@@ -54,6 +55,14 @@ function showToast(msg: string, kind: ToastKind = 'info'): void {
   }, 2200);
 }
 
+// 物品视觉：有图用图，无图或加载失败回退 emoji（onerror 隐藏 img 露出底层 emoji）
+function itemVisualHtml(itemId: ItemId): string {
+  const emoji = ITEMS[itemId].icon;
+  const img = ITEM_IMAGES[itemId];
+  if (!img) return `<span class="item-emoji">${emoji}</span>`;
+  return `<span class="item-visual"><span class="item-emoji">${emoji}</span><img class="item-img" src="${img}" alt="${ITEMS[itemId].name}" loading="lazy" onerror="this.style.display='none'"></span>`;
+}
+
 // ---------------- 渲染 ----------------
 function hudHtml(): string {
   const s = STATE.get();
@@ -92,7 +101,7 @@ function generatorsHtml(): string {
       can ? '' : 'disabled'
     }>
       <div class="gen-name">${g.name}</div>
-      <div class="gen-prod">${ITEMS[g.produces].icon} ${ITEMS[g.produces].name}</div>
+      <div class="gen-prod">${itemVisualHtml(g.produces)} ${ITEMS[g.produces].name}</div>
       <div class="gen-cost">⚡${CONFIG.spawnCost}${lockTxt ? ` · ${lockTxt}` : ''}</div>
     </button>`;
   }).join('');
@@ -128,7 +137,7 @@ function boardHtml(): string {
       const hl = highlightAttrs(itemId, idx, required);
       const cls = `cell ${hl.classes}`.trim();
       return `<div class="${cls}" data-cell="${idx}" style="--c:${it.color};${hl.style}">
-        <div class="item-icon">${it.icon}</div>
+        <div class="item-icon">${itemVisualHtml(itemId)}</div>
         <div class="item-name">${it.name}</div>
         <div class="item-tier">T${it.tier}</div>
       </div>`;
@@ -185,7 +194,7 @@ function leftPanelHtml(): string {
             ? `<button class="mini-btn" data-action="task" data-id="${t.id}" data-room="${room.id}" ${enough ? '' : 'disabled'}>交付</button>`
             : '🔒';
           return `<li class="task ${cls}">
-            <span class="t-req">${ITEMS[t.requireItem].icon} ×${t.requireQty}</span>
+            <span class="t-req">${itemVisualHtml(t.requireItem)} ×${t.requireQty}</span>
             <span class="t-rew">+${t.reward.coins}💰 +${t.reward.stars}★</span>
             ${btn}
           </li>`;
@@ -221,7 +230,7 @@ function rightPanelHtml(): string {
       const o = ORDER_MAP[oid];
       const enough = countOnBoard(o.requireItem) >= o.requireQty;
       return `<div class="order">
-        <div class="order-req">${ITEMS[o.requireItem].icon} ${ITEMS[o.requireItem].name} ×${o.requireQty}</div>
+        <div class="order-req">${itemVisualHtml(o.requireItem)} ${ITEMS[o.requireItem].name} ×${o.requireQty}</div>
         <div class="order-rew">+${o.reward.coins}💰 +${o.reward.stars}★ +${o.reward.xp}xp</div>
         <button class="mini-btn" data-action="order" data-id="${oid}" ${enough ? '' : 'disabled'}>交付</button>
       </div>`;
@@ -428,7 +437,7 @@ function onPointerMove(e: PointerEvent): void {
     const it = ITEMS[s.board[drag.from]!];
     const g = document.createElement('div');
     g.className = 'drag-ghost';
-    g.textContent = it.icon;
+    g.innerHTML = itemVisualHtml(s.board[drag.from]!);
     document.body.appendChild(g);
     drag.ghost = g;
   }
