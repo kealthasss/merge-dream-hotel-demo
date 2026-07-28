@@ -55,12 +55,13 @@ function showToast(msg: string, kind: ToastKind = 'info'): void {
   }, 2200);
 }
 
-// 物品视觉：有图用图，无图或加载失败回退 emoji（onerror 隐藏 img 露出底层 emoji）
+// 物品视觉：有图用图，无图或加载失败回退 emoji
+// emoji fallback 默认隐藏，避免透明 PNG 在 anti-aliasing 处透出底层 emoji；onerror 时添加 no-img 类显示 fallback
 function itemVisualHtml(itemId: ItemId): string {
   const emoji = ITEMS[itemId].icon;
   const img = ITEM_IMAGES[itemId];
-  if (!img) return `<span class="item-emoji">${emoji}</span>`;
-  return `<span class="item-visual"><span class="item-emoji">${emoji}</span><img class="item-img" src="${img}" alt="${ITEMS[itemId].name}" loading="lazy" onerror="this.style.display='none'"></span>`;
+  if (!img) return `<span class="item-visual no-img"><span class="item-fallback">${emoji}</span></span>`;
+  return `<span class="item-visual"><span class="item-fallback">${emoji}</span><img class="item-img" src="${img}" alt="${ITEMS[itemId].name}" loading="lazy" onerror="this.style.display='none'; this.parentElement?.classList.add('no-img')"></span>`;
 }
 
 // ---------------- 渲染 ----------------
@@ -489,6 +490,7 @@ export function start(): void {
   app.addEventListener('pointerdown', onPointerDown);
   document.addEventListener('pointermove', onPointerMove);
   document.addEventListener('pointerup', onPointerUp);
+  document.addEventListener('pointercancel', onPointerUp);
   setInterval(() => {
     if (drag) return; // 拖拽中不刷新，避免打断
     if (tickEnergy(Date.now())) updateHud();
