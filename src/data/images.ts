@@ -26,3 +26,6 @@ export const ITEM_IMAGES: Record<string, string> = {
   gen_linen: 'assets/items/gen_linen.png',
   gen_pantry: 'assets/items/gen_pantry.png'
 };
+
+// 场景底图（棋盘背景）
+export const BG_BOARD = 'assets/bg/board_bg.png';

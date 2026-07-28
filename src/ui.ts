@@ -1,10 +1,10 @@
 // UI 层：渲染横屏界面、拖拽合并、弹窗、Toast。DOM 事件用委托，避免每次重渲染重绑。
 import { STATE } from './state/store';
 import { CONFIG } from './data/config';
-import { ITEMS } from './data/chains';
+import { ITEMS, CHAINS } from './data/chains';
 import { GENERATORS, GENERATOR_MAP } from './data/generators';
 import { AREAS, AREA_MAP, ORDER_MAP } from './data/areas';
-import { ITEM_IMAGES } from './data/images';
+import { ITEM_IMAGES, BG_BOARD } from './data/images';
 import {
   computeAreaUnlocked,
   computeGenUnlocked,
@@ -36,6 +36,9 @@ let modalTitle = '';
 let modalBody = '';
 let modalConfirm = '确认';
 
+// 合成链路图弹窗状态
+let recipeItem: string | null = null;
+
 let drag: { from: number; ghost: HTMLElement | null; moved: boolean; x: number; y: number; src: HTMLElement | null } | null = null;
 
 const app = document.getElementById('app')!;
@@ -62,6 +65,30 @@ function itemVisualHtml(itemId: ItemId): string {
   const img = ITEM_IMAGES[itemId];
   if (!img) return `<span class="item-visual no-img"><span class="item-fallback">${emoji}</span></span>`;
   return `<span class="item-visual"><span class="item-fallback">${emoji}</span><img class="item-img" src="${img}" alt="${ITEMS[itemId].name}" loading="lazy" draggable="false" onerror="this.style.display='none'; this.parentElement?.classList.add('no-img')"></span>`;
+}
+
+// 合成链路图：从生成器基础物逐级合并到目标物
+function recipeHtml(itemId: ItemId): string {
+  const it = ITEMS[itemId];
+  const chain = CHAINS.find((c) => c.id === it.chain)!;
+  const gen = GENERATOR_MAP[chain.generatorId];
+  const targetTier = it.tier;
+  const genNode = `<div class="r-node r-gen"><div class="r-ico">${itemVisualHtml(gen.produces)}</div><div class="r-label">${gen.name}</div></div>`;
+  let flow = genNode;
+  for (let t = 1; t <= targetTier; t++) {
+    const item = chain.tiers[t - 1];
+    const node = `<div class="r-node"><div class="r-ico">${itemVisualHtml(item.id)}</div><div class="r-label">${item.name}</div><div class="r-tier">T${item.tier}</div></div>`;
+    const op = t === 1 ? '<div class="r-op">产出</div>' : '<div class="r-op"><span class="r-plus">＋×2</span><span class="r-arrow">→</span></div>';
+    flow += op + node;
+  }
+  const baseNeeded = Math.pow(2, targetTier - 1);
+  return `<div class="recipe-flow">${flow}</div>
+    <p class="recipe-note">由「${gen.name}」产出基础物，每级需 2 个上一级合并升级（共需 ${baseNeeded} 个基础物）。</p>`;
+}
+
+function openRecipe(itemId: ItemId): void {
+  recipeItem = itemId;
+  render();
 }
 
 // ---------------- 渲染 ----------------
@@ -195,7 +222,7 @@ function leftPanelHtml(): string {
             ? `<button class="mini-btn" data-action="task" data-id="${t.id}" data-room="${room.id}" ${enough ? '' : 'disabled'}>交付</button>`
             : '🔒';
           return `<li class="task ${cls}">
-            <span class="t-req">${itemVisualHtml(t.requireItem)} ×${t.requireQty}</span>
+            <span class="t-req recipe-link" data-action="recipe" data-id="${t.requireItem}" title="查看合成链路">${itemVisualHtml(t.requireItem)} ×${t.requireQty}</span>
             <span class="t-rew">+${t.reward.coins}💰 +${t.reward.stars}★</span>
             ${btn}
           </li>`;
@@ -231,7 +258,7 @@ function rightPanelHtml(): string {
       const o = ORDER_MAP[oid];
       const enough = countOnBoard(o.requireItem) >= o.requireQty;
       return `<div class="order">
-        <div class="order-req">${itemVisualHtml(o.requireItem)} ${ITEMS[o.requireItem].name} ×${o.requireQty}</div>
+        <div class="order-req recipe-link" data-action="recipe" data-id="${o.requireItem}" title="查看合成链路">${itemVisualHtml(o.requireItem)} ${ITEMS[o.requireItem].name} ×${o.requireQty}</div>
         <div class="order-rew">+${o.reward.coins}💰 +${o.reward.stars}★ +${o.reward.xp}xp</div>
         <button class="mini-btn" data-action="order" data-id="${oid}" ${enough ? '' : 'disabled'}>交付</button>
       </div>`;
@@ -253,6 +280,15 @@ function rightPanelHtml(): string {
 }
 
 function modalHtml(): string {
+  if (recipeItem) {
+    return `<div class="modal-backdrop" data-action="recipe-close">
+      <div class="modal recipe-modal">
+        <h3>合成链路 · ${ITEMS[recipeItem].name}</h3>
+        <div class="modal-body">${recipeHtml(recipeItem)}</div>
+        <div class="modal-foot"><button data-action="recipe-close">关闭</button></div>
+      </div>
+    </div>`;
+  }
   if (!pendingAction) return '';
   return `<div class="modal-backdrop" data-action="modal-cancel">
     <div class="modal">
@@ -273,7 +309,7 @@ function render(): void {
       ${leftPanelHtml()}
       <section class="board-wrap">
         <div class="generators">${generatorsHtml()}</div>
-        <div class="board" id="board">${boardHtml()}</div>
+        <div class="board" id="board" style="--board-bg:url('${BG_BOARD}')">${boardHtml()}</div>
         <div class="hint">提示：拖动两个相同物品到一处即可合成升级 · 点上方生成器产出基础物</div>
       </section>
       ${rightPanelHtml()}
@@ -321,6 +357,15 @@ function updateHud(): void {
 function handleAction(action: string, id: string | null, el: HTMLElement): void {
   const s = STATE.get();
   switch (action) {
+    case 'recipe': {
+      openRecipe(id as ItemId);
+      break;
+    }
+    case 'recipe-close': {
+      recipeItem = null;
+      render();
+      break;
+    }
     case 'gen': {
       const r = spawn(id!);
       if (r.msg) showToast(r.msg, r.kind);
