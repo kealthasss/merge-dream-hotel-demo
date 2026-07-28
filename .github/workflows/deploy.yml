@@ -31,6 +31,11 @@ jobs:
           npm install
           npm run build
 
+      # dist-single 入口此前被 bookmark，需一并部署到 Pages 站点
+      - name: Include dist-single
+        run: |
+          cp -R dist-single dist/dist-single
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
