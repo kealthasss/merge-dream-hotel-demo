@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Merge Dream Hotel Demo — 美术图本地生成脚本
-============================================
-沙箱环境无法访问生图聚合站（TLS 被拦截），因此本脚本需在你本机（Mac，可联网）运行。
-运行后把所有物品/生成器图标下载到 src/public/assets/items/，UI 会自动用图替换 emoji。
+Merge Dream Hotel Demo — 美术图生成脚本
+========================================
+生图聚合站（ai.liaobots2.work，模型 gpt-image-2）经 /v1/chat/completions 实测可用，
+沙箱与本机均可运行。运行后把所有物品/生成器图标下载到 src/public/assets/items/，
+UI 会自动用图替换 emoji（缺失时回退 emoji）。
 
 用法：
     cd <项目根目录>
@@ -15,9 +16,7 @@ Merge Dream Hotel Demo — 美术图本地生成脚本
     git commit -m "art: 生成 18 张物品/生成器美术图"
     git push
 
-可调项（见下方常量）：
-- API_BASE / LOGIN / MODEL 需按聚合站实际契约微调。
-- 若返回结构不同，脚本会打印原始响应片段，方便据此调整解析逻辑（extract_image）。
+可调项（见下方常量）：API_BASE / LOGIN / MODEL。
 """
 import os
 import re
@@ -27,9 +26,9 @@ import base64
 import urllib.request
 import urllib.error
 
-API_BASE = "https://ai.liaobots.work/v1/chat/completions"
+API_BASE = "https://ai.liaobots2.work/v1/chat/completions"
 LOGIN    = "8ZnfRXtWkWGsO"   # 聚合站登陆码；若需作为其他头，见 HEADERS 注释
-MODEL    = "gpt-4o-image"    # 按聚合站支持的生图模型名调整（如 gpt-image-1 / dall-e-3）
+MODEL    = "gpt-image-2"     # 经 /v1/chat/completions 实测可用，返回 markdown 图片 URL
 
 # 输出目录：scripts/../src/public/assets/items
 OUT_DIR = os.path.abspath(
